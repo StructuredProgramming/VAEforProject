@@ -15,6 +15,9 @@ from PIL import Image as PImage
 device="cpu"
 trainloss=0
 testloss=0
+def weights_init(m):
+    if isinstance(m, nn.Linear):
+      torch.nn.init.kaiming_uniform_(m.weight)
 class VAE(nn.Module):
     def __init__(self, z_dim):
         super(VAE, self).__init__()
@@ -59,11 +62,15 @@ class VAE(nn.Module):
         nn.ReLU(),
         nn.Linear(540,720)
         )
+        nn.init.kaiming_uniform_(self.fc_mu.weight)
+        nn.init.kaiming_uniform_(self.fc_logvar.weight)
+        self.encode.apply(weights_init)
+        self.decode.apply(weights_init)
+
         
     def encoder(self, x):
         a=self.encode(x)
-        return self.fc_mu(a),self.fc_logvar(a)
-        
+        return self.fc_mu(a),self.fc_logvar(a)     
 
     def sampling(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
@@ -85,6 +92,7 @@ def loss_function(recon_x, x, mu, logvar):
     MSE=myloss(recon_x,x)
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return MSE + KLD
+
 def trainortest(myvector):
     optimizer.zero_grad()
     recon_batch, mu, logvar = vae(myvector)
@@ -108,6 +116,7 @@ trainloss=0
 testloss=0
 for line in lines:
         epoch+=1
+        print(epoch)
         x, y = line.split('=')[0], line.split('=')[1]
         x, y = x.split(' '), y.split(' ')
         x = [i for i in x if i]
@@ -137,5 +146,10 @@ for line in lines:
             trainloss+=answer
         else:
             testloss+=answer
-        
+print("Train loss")  
+print(trainloss/34000)
+print("Test loss") 
+print(testloss/(epoch-34000))     
+torch.save(vae.state_dict(), 'D:\abhay')
+
         
