@@ -13,6 +13,8 @@ from torchvision.utils import save_image
 import os
 from PIL import Image as PImage
 device="cpu"
+trainloss=0
+testloss=0
 class VAE(nn.Module):
     def __init__(self, z_dim):
         super(VAE, self).__init__()
@@ -57,7 +59,7 @@ class VAE(nn.Module):
         nn.ReLU(),
         nn.Linear(540,720)
         )
-
+        
     def encoder(self, x):
         a=self.encode(x)
         return self.fc_mu(a),self.fc_logvar(a)
@@ -75,6 +77,7 @@ class VAE(nn.Module):
         mu, logvar = self.encoder(x)
         z = self.sampling(mu, logvar)
         return self.decoder(z), mu, logvar
+  
 vae = VAE(z_dim=20).to(device)
 optimizer = optim.Adam(vae.parameters(), lr=0.001)
 def loss_function(recon_x, x, mu, logvar):
@@ -82,22 +85,27 @@ def loss_function(recon_x, x, mu, logvar):
     MSE=myloss(recon_x,x)
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return MSE + KLD
-
-def train(myvector):
-    vae.train()
+def trainortest(myvector):
     optimizer.zero_grad()
     recon_batch, mu, logvar = vae(myvector)
     loss = loss_function(recon_batch, myvector, mu, logvar)
-    loss.backward()
-    myloss=loss.item()
-    optimizer.step()
+    if(epoch<34000):
+        loss.backward()
+        myloss=loss.item()
+        optimizer.step()
+    else:
+        myloss=loss.item()
     print(myloss)
     if(epoch==100):
         print(input_list)
         print(recon_batch)
+    return myloss
 with open('x_y (1).txt', 'r') as f: 
     lines = f.readlines()
 epoch=0
+
+trainloss=0
+testloss=0
 for line in lines:
         epoch+=1
         x, y = line.split('=')[0], line.split('=')[1]
@@ -124,5 +132,10 @@ for line in lines:
             input_list.append(np.real(S[i]))
             input_list.append(np.imag(S[i]))
         input_list=torch.FloatTensor(input_list)
-        train(input_list)
+        answer=trainortest(input_list)
+        if(epoch<34000):
+            trainloss+=answer
+        else:
+            testloss+=answer
+        
         
