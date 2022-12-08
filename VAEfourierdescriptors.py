@@ -97,7 +97,7 @@ def trainortest(myvector):
     optimizer.zero_grad()
     recon_batch, mu, logvar = vae(myvector)
     loss = loss_function(recon_batch, myvector, mu, logvar)
-    if(epoch<34000):
+    if(epoch<3600):
         loss.backward()
         myloss=loss.item()
         optimizer.step()
@@ -114,6 +114,7 @@ epoch=0
 
 trainloss=0
 testloss=0
+#batch_size will be 60
 for line in lines:
         epoch+=1
         print(epoch)
@@ -142,14 +143,15 @@ for line in lines:
             input_list.append(np.imag(S[i]))
         input_list=torch.FloatTensor(input_list)
         answer=trainortest(input_list)
-        if(epoch<34000):
+        if(epoch<3600):
             trainloss+=answer
         else:
             testloss+=answer
-print("Train loss")  
-print(trainloss/34000)
-print("Test loss") 
-print(testloss/(epoch-34000))     
-torch.save(vae.state_dict(), 'D:\abhay')
+        if(epoch==4500):
+            print("Train loss")  
+            print(trainloss/3600)
+            print("Test loss") 
+            print(testloss/(900))      
+            torch.save(vae.state_dict(), 'C:/users/abhay/torch/AbhayFourierTransformVAEWeights')
 
         
