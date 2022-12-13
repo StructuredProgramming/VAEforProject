@@ -226,7 +226,7 @@ for epoch in range(200):
                 count=0
                 print(myloss)
                 input_descriptors=np.zeros((batch_size,22),dtype='float64')
-            elif(count==batch_size and runningnum>39168):
+            elif(count==batch_size and runningnum>=39168):
                 input_descriptors=torch.from_numpy(input_descriptors).to(device)
                 recon_batch, mu, logvar = vae(input_descriptors)
                 loss = loss_function(recon_batch, input_descriptors, mu, logvar)
